@@ -1,0 +1,29 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int           @id @default(autoincrement())
+  email         String        @unique
+  name          String
+  balance       Float
+  sentTransactions Transaction[] @relation("SentTransactions")
+  receivedTransactions Transaction[] @relation("ReceivedTransactions")
+}
+
+model Transaction {
+  id        Int      @id @default(autoincrement())
+  value     Float
+  sender    User     @relation("SentTransactions", fields: [senderId], references: [id])
+  senderId  Int
+  receiver  User     @relation("ReceivedTransactions", fields: [receiverId], references: [id])
+  receiverId Int
+}
