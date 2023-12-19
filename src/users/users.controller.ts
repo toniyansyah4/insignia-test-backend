@@ -9,9 +9,10 @@ export class UsersController {
   async create(
     @Body('name') name: string,
     @Body('email') email: string,
+    @Body('password') password: string,
     @Body('balance') balance: number,
   ) {
-    return this.usersService.createUser(name, email, balance);
+    return this.usersService.createUser(name, email, password, balance);
   }
 
   @Get(':id/balance')

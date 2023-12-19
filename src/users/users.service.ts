@@ -1,16 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async createUser(name: string, email: string, balance?: number) {
+  async createUser(
+    name: string,
+    email: string,
+    password: string,
+    balance?: number,
+  ) {
+    const hashedPassword = bcrypt.hashSync(password, 10);
     return this.prisma.user.create({
       data: {
         name: name,
         email: email,
         balance: balance,
+        password: hashedPassword,
       },
     });
   }
@@ -24,20 +32,26 @@ export class UsersService {
   }
 
   async deposit(userId: number, amount: number) {
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        balance: {
-          increment: amount,
-        },
-        sentTransactions: {
-          create: {
-            value: amount,
-            receiverId: userId,
+    try {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          balance: {
+            increment: amount,
+          },
+          sentTransactions: {
+            create: {
+              value: amount,
+              receiverId: userId,
+            },
           },
         },
-      },
-    });
+      });
+      return { message: 'Deposit successful' };
+    } catch (error) {
+      console.error(error);
+      throw new Error('Failed to update user');
+    }
   }
 
   async transfer(senderId: number, receiverId: number, amount: number) {
