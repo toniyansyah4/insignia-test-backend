@@ -85,6 +85,34 @@ export class UsersService {
     return transaction;
   }
 
+  async getTransactions(page: number, limit: number) {
+    const pageNumber = parseInt(String(page), 10);
+    const pageSize = parseInt(String(limit), 10);
+
+    if (isNaN(pageNumber) || isNaN(pageSize)) {
+      throw new Error('Page and limit must be numbers');
+    }
+
+    const totalTransactions = await this.prisma.transaction.count();
+    const totalPages = Math.ceil(totalTransactions / pageSize);
+
+    const data = await this.prisma.transaction.findMany({
+      skip: (pageNumber - 1) * pageSize,
+      take: pageSize,
+      select: {
+        id: true,
+        value: true,
+        sender: { select: { name: true } },
+        receiver: { select: { name: true } },
+      },
+    });
+
+    return {
+      data,
+      totalPages,
+    };
+  }
+
   async getTopTransaction() {
     const maxTransaction = await this.prisma.transaction.aggregate({
       _max: {
